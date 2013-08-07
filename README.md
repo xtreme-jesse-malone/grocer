@@ -111,6 +111,8 @@ rescue Grocer::GotErrorResponseException => e
   puts "Message identified by #{identifier} failed citing reason '#{message}'"
 end
 ```
+Note that apns will discard any notifications sent after a failure, so when you catch
+an error you should resend any notifications sent after the offending notification
 
 #### Custom Payloads
 
