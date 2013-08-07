@@ -2,6 +2,16 @@ require 'grocer'
 require 'grocer/ssl_connection'
 
 module Grocer
+
+
+  class GotErrorResponseException < Exception
+    attr_reader :identifier
+    def initialize(msg,id)
+      super(msg)
+      @identifier = id
+    end
+  end
+
   class Connection
     attr_reader :certificate, :passphrase, :gateway, :port, :retries
 
@@ -22,14 +32,32 @@ module Grocer
     def write(content)
       with_connection do
         ssl.write(content)
+        response = ssl.read_nonblock(Grocer::ErrorResponse::LENGTH)
+        handle_error_response(response)
       end
+
     end
 
     def connect
       ssl.connect unless ssl.connected?
     end
 
+    def close(timeout)
+      with_connection do
+        response = ssl.read_nonblock(Grocer::ErrorResponse::LENGTH,timeout)
+        handle_error_response(response)
+      end
+      ssl.disconnect
+    end
+
     private
+
+    def handle_error_response(response)
+      if response
+          error = ErrorResponse.new(response)
+          raise (GotErrorResponseException.new(error.status, error.identifier))
+        end
+    end
 
     def ssl
       @ssl_connection ||= build_connection
@@ -62,7 +90,7 @@ module Grocer
 
         raise unless attempts < retries
 
-        destroy_connection
+        #destroy_connection
         attempts += 1
         retry
       end

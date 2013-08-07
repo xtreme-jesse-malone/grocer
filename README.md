@@ -91,6 +91,27 @@ notifications.each do |notification|
 end
 ```
 
+### Checking for errors
+
+Grocer will raise a GotErrorResponseException if apns sends back an error while the
+connection is open. You can get the identifier of the failing notification from this exception.
+It is adviseable that you call Pusher.close() when you have finished sending notifications. This will
+close the connection and check for any errors apns may have sent since the last notification was pushed.
+
+```ruby
+pusher = Grocer.pusher(connection_options)
+begin
+  notifications.each do |notification|
+    pusher.push(notification)
+  end
+  pusher.close(2) # argument '2' is an optional timeout value (default is 2)
+rescue Grocer::GotErrorResponseException => e
+  identifier = e.identifier
+  message = e.message
+  puts "Message identified by #{identifier} failed citing reason '#{message}'"
+end
+```
+
 #### Custom Payloads
 
 The Apple documentation says "Providers can specify custom payload values

@@ -6,7 +6,7 @@ require 'stringio'
 module Grocer
   class SSLConnection
     extend Forwardable
-    def_delegators :@ssl, :write, :read
+    def_delegators :@ssl, :write, :read, :sysread, :pending, :read_nonblock, :io
 
     attr_accessor :certificate, :passphrase, :gateway, :port
 
@@ -18,6 +18,16 @@ module Grocer
 
     def connected?
       !@ssl.nil?
+    end
+
+    def read_nonblock(length,timeout=0)
+      begin
+          IO.select([@ssl],nil,nil,timeout)
+          buf = @ssl.read_nonblock(length)
+          return buf
+      rescue IO::WaitReadable => e
+      rescue EOFError 
+      end
     end
 
     def connect

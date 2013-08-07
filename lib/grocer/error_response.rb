@@ -15,6 +15,9 @@ module Grocer
 
     COMMAND = 8
 
+    LENGTH  = 6 #length in bytes
+    
+
     attr_accessor :status_code, :identifier
 
     def initialize(binary_tuple)
