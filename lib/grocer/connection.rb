@@ -32,8 +32,6 @@ module Grocer
     def write(content)
       with_connection do
         ssl.write(content)
-        response = ssl.read_nonblock(Grocer::ErrorResponse::LENGTH)
-        handle_error_response(response)
       end
 
     end
@@ -88,7 +86,12 @@ module Grocer
           raise
         end
 
-        raise unless attempts < retries
+        if attempts >= retries
+          response = ssl.read_nonblock(Grocer::ErrorResponse::LENGTH)
+          handle_error_response(response)
+          raise
+        end
+        #raise unless attempts < retries
 
         #destroy_connection
         attempts += 1
